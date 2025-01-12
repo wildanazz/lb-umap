@@ -186,8 +186,8 @@
         
           svg.append("text")
             .attr("x", xScale(d.x) + 10)
-            .attr("y", yScale(d.y) + 30)
-            .text(`Genre: ${Genres}`)
+            .attr("y", yScale(d.y) + 50)
+            .text(`Genre: ${JSON.parse(d.Genres.replace(/'/g, '"')).join(',').replace(/,([^ ])/g, ', $1')}`)
             .attr("class", "tooltip");     
         })
         .on("mouseout", function(event, d) {
