@@ -195,9 +195,8 @@
           svg.selectAll(".tooltip").remove();
         });
 
-      // Add axes without ticks and labels
-      const xAxis = d3.axisBottom(xScale).ticks(0); // Remove ticks
-      const yAxis = d3.axisLeft(yScale).ticks(0); // Remove ticks
+      const xAxis = d3.axisBottom(xScale).ticks(0);
+      const yAxis = d3.axisLeft(yScale).ticks(0);
 
       svg.append("g")
         .attr("transform", "translate(0," + (height - 50) + ")")
