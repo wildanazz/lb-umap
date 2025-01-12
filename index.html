@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Letterboxd UMAP Embedding</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    /* Reset and make full-screen */
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #f4f4f9;
+      font-family: 'Arial', sans-serif;
+      overflow: hidden; /* Prevent scrollbars */
+    }
+
+    h1 {
+      color: #333;
+      text-align: center;
+      margin-top: 20px;
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+    }
+
+    .scatter {
+      width: 100%;
+      height: 100%;
+      background-color: white;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    circle {
+      opacity: 0.7;
+      transition: fill 0.3s;
+    }
+
+    circle:hover {
+      cursor: pointer;
+      opacity: 1;
+    }
+
+    .tooltip {
+      font-size: 14px;
+      pointer-events: none;
+      fill: black;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+    }
+
+    .axis path, .axis line {
+      shape-rendering: crispEdges;
+      stroke: none;
+    }
+
+    .zoom-text {
+      font-size: 14px;
+      font-weight: bold;
+      fill: #333;
+    }
+
+    .zoom-control {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(255, 255, 255, 0.8);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .zoom-control button {
+      font-size: 14px;
+      padding: 8px;
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    .zoom-control button:hover {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- <h1>Letterboxd UMAP Embedding</h1> -->
+  <svg class="scatter"></svg>
+
+  <div class="zoom-control">
+    <button id="zoom-in">Zoom In</button>
+    <button id="zoom-out">Zoom Out</button>
+  </div>
+
+  <script>
+    // Get the width and height of the window to make the plot full-screen
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const svg = d3.select("svg")
+      .attr("width", width)
+      .attr("height", height);
+
+    // Load the CSV data from the 'data' folder
+    d3.csv("data/umap_data.csv").then(function(data) {
+      // Create scales for x and y axes based on the data
+      const xScale = d3.scaleLinear()
+        .domain([d3.min(data, d => parseFloat(d.x)), d3.max(data, d => parseFloat(d.x))])
+        .range([50, width - 50]);
+
+      const yScale = d3.scaleLinear()
+        .domain([d3.min(data, d => parseFloat(d.y)), d3.max(data, d => parseFloat(d.y))])
+        .range([height - 50, 50]);
+
+      // Create a color scale based on the Average_rating
+      const colorScale = d3.scaleSequential(d3.interpolateViridis)
+        .domain([d3.min(data, d => parseFloat(d.Average_rating)), d3.max(data, d => parseFloat(d.Average_rating))]);
+
+      // Create zoom behavior
+      const zoom = d3.zoom()
+        .scaleExtent([0.5, 10]) // Limit zooming range
+        .on("zoom", zoomed);
+
+      svg.call(zoom); // Apply zoom behavior to the svg
+
+      // Add background grid
+      svg.append("g")
+        .attr("class", "grid")
+        .selectAll("line")
+        .data(xScale.ticks(10))
+        .enter().append("line")
+        .attr("x1", d => xScale(d))
+        .attr("x2", d => xScale(d))
+        .attr("y1", 50)
+        .attr("y2", height - 50)
+        .style("stroke", "#eee")
+        .style("stroke-width", 1)
+        .style("stroke-dasharray", "2,2");
+
+      svg.append("g")
+        .attr("class", "grid")
+        .selectAll("line")
+        .data(yScale.ticks(10))
+        .enter().append("line")
+        .attr("y1", d => yScale(d))
+        .attr("y2", d => yScale(d))
+        .attr("x1", 50)
+        .attr("x2", width - 50)
+        .style("stroke", "#eee")
+        .style("stroke-width", 1)
+        .style("stroke-dasharray", "2,2");
+
+      // Add circles (points) to the plot with color based on the Average_rating
+      const circles = svg.selectAll("circle")
+        .data(data)
+        .enter()
+        .append("circle")
+        .attr("cx", d => xScale(d.x))
+        .attr("cy", d => yScale(d.y))
+        .attr("r", 5)
+        .attr("fill", d => colorScale(parseFloat(d.Average_rating)))  // Color based on average rating
+        .on("mouseover", function(event, d) {
+          d3.select(this).attr("opacity", 1.0);
+
+          svg.append("text")
+            .attr("x", xScale(d.x) + 10)
+            .attr("y", yScale(d.y) - 10)
+            .text(d.Film_title)
+            .attr("class", "tooltip");
+
+          svg.append("text")
+            .attr("x", xScale(d.x) + 10)
+            .attr("y", yScale(d.y) + 10)
+            .text(`Director: ${d.Director}`)
+            .attr("class", "tooltip");
+
+          svg.append("text")
+            .attr("x", xScale(d.x) + 10)
+            .attr("y", yScale(d.y) + 30)
+            .text(`Avg Rating: ${parseFloat(d.Average_rating).toFixed(2)}`)
+            .attr("class", "tooltip");
+        
+          svg.append("text")
+            .attr("x", xScale(d.x) + 10)
+            .attr("y", yScale(d.y) + 30)
+            .text(`Genre: ${Genres}`)
+            .attr("class", "tooltip");     
+        })
+        .on("mouseout", function(event, d) {
+          d3.select(this).attr("opacity", 0.7);
+          svg.selectAll(".tooltip").remove();
+        });
+
+      // Add axes without ticks and labels
+      const xAxis = d3.axisBottom(xScale).ticks(0); // Remove ticks
+      const yAxis = d3.axisLeft(yScale).ticks(0); // Remove ticks
+
+      svg.append("g")
+        .attr("transform", "translate(0," + (height - 50) + ")")
+        .call(xAxis)
+        .attr("class", "axis");
+
+      svg.append("g")
+        .attr("transform", "translate(50, 0)")
+        .call(yAxis)
+        .attr("class", "axis");
+
+      // Zoomed function: applies zooming behavior to all elements
+      function zoomed(event) {
+        svg.selectAll("circle")
+          .attr("transform", event.transform);
+        svg.selectAll(".axis")
+          .attr("transform", event.transform);
+        svg.selectAll(".grid line")
+          .attr("transform", event.transform);
+      }
+
+      // Zoom buttons (Zoom In / Zoom Out)
+      document.getElementById("zoom-in").addEventListener("click", function() {
+        svg.transition().duration(500).call(zoom.scaleBy, 1.2);
+      });
+
+      document.getElementById("zoom-out").addEventListener("click", function() {
+        svg.transition().duration(500).call(zoom.scaleBy, 0.8);
+      });
+    });
+  </script>
+</body>
+</html>
