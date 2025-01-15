@@ -79,21 +79,67 @@
       padding: 8px;
       margin: 5px;
       cursor: pointer;
+      border-radius: 5px;
+      background-color: #fff;
+      border: 1px solid #ddd;
     }
 
     .zoom-control button:hover {
       background-color: #f0f0f0;
     }
+
+    /* Styling for the legend */
+    .legend {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background-color: rgba(255, 255, 255, 0.9);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      width: 200px;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .legend-color-bar {
+      width: 100%;
+      height: 15px;
+      border-radius: 10px;
+      background: linear-gradient(to right, #440154, #482878, #3e4a89, #31688e, #21918c, #35b779, #6aaf61, #b8de29);
+      margin-bottom: 8px;
+    }
+
+    .legend-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #333;
+    }
+
   </style>
 </head>
 <body>
 
-  <!-- <h1>Letterboxd UMAP Embedding</h1> -->
   <svg class="scatter"></svg>
 
   <div class="zoom-control">
     <button id="zoom-in">Zoom In</button>
     <button id="zoom-out">Zoom Out</button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-title">Average Rating</div>
+    <div class="legend-color-bar"></div>
+    <div class="legend-labels">
+      <span>Low</span><span>High</span>
+    </div>
   </div>
 
   <script>
@@ -104,6 +150,8 @@
     const svg = d3.select("svg")
       .attr("width", width)
       .attr("height", height);
+
+    let currentZoom = 1; // Store the current zoom scale
 
     // Load the CSV data from the 'data' folder
     d3.csv("data/umap_data.csv").then(function(data) {
@@ -120,9 +168,10 @@
       const colorScale = d3.scaleSequential(d3.interpolateViridis)
         .domain([d3.min(data, d => parseFloat(d.Average_rating)), d3.max(data, d => parseFloat(d.Average_rating))]);
 
-      // Create zoom behavior
+      // Create zoom behavior with min and max scale limits
       const zoom = d3.zoom()
-        .scaleExtent([0.5, 10]) // Limit zooming range
+        .scaleExtent([1, 3]) // Min zoom: 0.5, Max zoom: 3
+        .translateExtent([[0, 0], [width, height]]) // Prevent pan beyond left and right
         .on("zoom", zoomed);
 
       svg.call(zoom); // Apply zoom behavior to the svg
@@ -183,12 +232,12 @@
             .attr("y", yScale(d.y) + 30)
             .text(`Avg Rating: ${parseFloat(d.Average_rating).toFixed(2)}`)
             .attr("class", "tooltip");
-        
+
           svg.append("text")
             .attr("x", xScale(d.x) + 10)
             .attr("y", yScale(d.y) + 50)
             .text(`Genre: ${JSON.parse(d.Genres.replace(/'/g, '"')).join(',').replace(/,([^ ])/g, ', $1')}`)
-            .attr("class", "tooltip");     
+            .attr("class", "tooltip");
         })
         .on("mouseout", function(event, d) {
           d3.select(this).attr("opacity", 0.7);
