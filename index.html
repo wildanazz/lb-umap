@@ -123,6 +123,17 @@
       color: #333;
     }
 
+    /* Loading indicator */
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 18px;
+      font-weight: bold;
+      color: #333;
+      z-index: 10;
+    }
   </style>
 </head>
 <body>
@@ -142,6 +153,9 @@
     </div>
   </div>
 
+  <!-- Loading Indicator -->
+  <div class="loading" id="loading-message">Loading data...</div>
+
   <script>
     // Get the width and height of the window to make the plot full-screen
     const width = window.innerWidth;
@@ -153,8 +167,14 @@
 
     let currentZoom = 1; // Store the current zoom scale
 
+    // Show loading indicator initially
+    const loadingMessage = document.getElementById("loading-message");
+
     // Load the CSV data from the 'data' folder
     d3.csv("data/umap_data.csv").then(function(data) {
+      // Hide loading indicator once data is loaded
+      loadingMessage.style.display = "none";
+
       // Create scales for x and y axes based on the data
       const xScale = d3.scaleLinear()
         .domain([d3.min(data, d => parseFloat(d.x)), d3.max(data, d => parseFloat(d.x))])
@@ -275,6 +295,8 @@
       document.getElementById("zoom-out").addEventListener("click", function() {
         svg.transition().duration(500).call(zoom.scaleBy, 0.8);
       });
+    }).catch(function(error) {
+      loadingMessage.textContent = "Failed to load data.";
     });
   </script>
 </body>
