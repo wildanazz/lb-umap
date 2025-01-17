@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Letterboxd UMAP Embedding</title>
+  <title>Popular Films on Letterboxd (2024)</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <style>
     body, html {
@@ -230,29 +230,51 @@
             .attr("x", xScale(d.x) + 10)
             .attr("y", yScale(d.y) - 10)
             .text(d.Film_title)
-            .attr("class", "tooltip");
+            .attr("class", "tooltip")
+            .style("font-size", "20px")
+            .style("font-weight", "normal");
 
           svg.append("text")
             .attr("x", xScale(d.x) + 10)
             .attr("y", yScale(d.y) + 10)
-            .text(`Director: ${d.Director}`)
-            .attr("class", "tooltip");
-
+            .text(`Watches: ${d.Watches}`)
+            .attr("class", "tooltip")
+            .style("font-weight", "normal");;
+          
           svg.append("text")
             .attr("x", xScale(d.x) + 10)
             .attr("y", yScale(d.y) + 30)
-            .text(`Avg Rating: ${parseFloat(d.Average_rating).toFixed(2)}`)
-            .attr("class", "tooltip");
-
+            .text(`Likes: ${d.Likes}`)
+            .attr("class", "tooltip")
+            .style("font-weight", "normal");;
+          
           svg.append("text")
             .attr("x", xScale(d.x) + 10)
             .attr("y", yScale(d.y) + 50)
+            .text(`Total ratings: ${d.Total_ratings}`)
+            .attr("class", "tooltip")
+            .style("font-weight", "normal");;
+
+          svg.append("text")
+            .attr("x", xScale(d.x) + 10)
+            .attr("y", yScale(d.y) + 70)
+            .text(`Avg ratings: ${parseFloat(d.Average_rating).toFixed(2)}`)
+            .attr("class", "tooltip")
+            .style("font-weight", "normal");;
+
+          svg.append("text")
+            .attr("x", xScale(d.x) + 10)
+            .attr("y", yScale(d.y) + 90)
             .text(`Genre: ${JSON.parse(d.Genres.replace(/'/g, '"')).join(',').replace(/,([^ ])/g, ', $1')}`)
-            .attr("class", "tooltip");
+            .attr("class", "tooltip")
+            .style("font-weight", "normal");;
         })
         .on("mouseout", function(event, d) {
           d3.select(this).attr("opacity", 0.7);
           svg.selectAll(".tooltip").remove();
+        })
+        .on('click', (event, d) => {
+          window.open(d.Film_URL, '_blank');
         });
 
       const xAxis = d3.axisBottom(xScale).ticks(0);
